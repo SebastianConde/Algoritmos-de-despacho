@@ -61,7 +61,7 @@ def ordenar_procesos_sjf(procesos):
 
 
 def mostrar_diagrama_gantt_RR(procesos, quantum): #Round Robin
-    nombres_procesos, tiempos_rafaga = separar_procesos(procesos)
+    nombres_procesos, tiempos_rafaga, tiempos_llegada = separar_procesos(procesos)
     xlim = sum(tiempos_rafaga) + 1 #Limite del eje X dinámico
 
     #Tiempos de inicio de cada proceso
@@ -93,7 +93,11 @@ def mostrar_diagrama_gantt_RR(procesos, quantum): #Round Robin
         tiempos_rafaga_copia[i] -= quantum # Restar el quantum al tiempo de ráfaga del proceso
         if tiempos_rafaga_copia[i] == 0:
             tiempo_final_proceso.append(quantum + quantum*i + rafaga_anterior)
-        ax.plot([0 + quantum*i + rafaga_anterior, quantum + quantum*i + rafaga_anterior], [0.25 + posiciones_originales[i], 0.25 + posiciones_originales[i]], color='red') # Dibujar las líneas de los procesos de un punto a punto dependiendo el quantum y el proceso en el que vayamos del bucle, se tiene en cuenta la línea en que altura debe estar por el mapeo de posiciones
+
+        if tiempos_llegada[i] > rafaga_anterior:
+            ax.plot([0 + quantum*i + tiempos_llegada[i], quantum + quantum*i + tiempos_llegada[i]], [0.25 + posiciones_originales[i], 0.25 + posiciones_originales[i]], color='red') # Dibujar las líneas de los procesos de un punto a punto dependiendo el quantum y el proceso en el que vayamos del bucle, se tiene en cuenta la línea en que altura debe estar por el mapeo de posiciones, si hay espera de por medio
+        else:
+            ax.plot([0 + quantum*i + rafaga_anterior, quantum + quantum*i + rafaga_anterior], [0.25 + posiciones_originales[i], 0.25 + posiciones_originales[i]], color='red') # Dibujar las líneas de los procesos de un punto a punto dependiendo el quantum y el proceso en el que vayamos del bucle, se tiene en cuenta la línea en que altura debe estar por el mapeo de posiciones
         
         tiempos_inicio.append(0 + quantum*i + rafaga_anterior)
         tiempos_finalizacion.append(quantum + quantum*i + rafaga_anterior)
@@ -123,17 +127,19 @@ def mostrar_diagrama_gantt_RR(procesos, quantum): #Round Robin
 def separar_procesos(procesos): #Separar los procesos en dos listas, una con los nombres y otra con los tiempos de ráfaga por facilidad
     nombres_procesos = []
     tiempos_rafaga = []
+    tiempos_llegada = []
 
     for proceso in procesos:
-        nombre, tiempo_rafaga, _ = proceso
+        nombre, tiempo_rafaga, tiempo_llegada = proceso
         nombres_procesos.append(nombre)
         tiempos_rafaga.append(tiempo_rafaga)
+        tiempos_llegada.append(tiempo_llegada)
 
-    return nombres_procesos, tiempos_rafaga
+    return nombres_procesos, tiempos_rafaga, tiempos_llegada
 
 
 def mostrar_diagrama_gantt(procesos): #FIFO y SJF
-    nombres_procesos, tiempos_rafaga = separar_procesos(procesos)
+    nombres_procesos, tiempos_rafaga, tiempos_llegada = separar_procesos(procesos)
     xlim = sum(tiempos_rafaga) + 1 #Limite del eje X dinámico
 
     #Tiempos de inicio de cada proceso
@@ -156,7 +162,10 @@ def mostrar_diagrama_gantt(procesos): #FIFO y SJF
     # Agregar los nombres de los procesos en el eje vertical
     for i, nombre_proceso in enumerate(nombres_procesos):
         ax.text(-1, i+0.25, nombre_proceso, ha='right', va='center') # Agregar los nombres de los procesos en el eje vertical
-        ax.plot([0 + rafaga_anterior, tiempos_rafaga[i] + rafaga_anterior], [0.25 + i, 0.25 + i], color='red') # Dibujar las líneas de los procesos de un punto a punto dependiendo el quantum y el proceso en el que vayamos del bucle, se tiene en cuenta la línea en que altura debe estar con la posición
+        if tiempos_llegada[i] > rafaga_anterior:
+            ax.plot([0 + tiempos_llegada[i], tiempos_rafaga[i] + tiempos_llegada[i]], [0.25 + i, 0.25 + i], color='red') # Dibujar las líneas de los procesos de un punto a punto y el proceso en el que vayamos del bucle, se tiene en cuenta la línea en que altura debe estar con la posición, aquí es en caso de que haya una espera de por medio
+        else:
+            ax.plot([0 + rafaga_anterior, tiempos_rafaga[i] + rafaga_anterior], [0.25 + i, 0.25 + i], color='red') # Dibujar las líneas de los procesos de un punto a punto  y el proceso en el que vayamos del bucle, se tiene en cuenta la línea en que altura debe estar con la posición
         tiempos_inicio.append(rafaga_anterior) # Añadir el tiempo de inicio del proceso a la lista
         rafaga_anterior += tiempos_rafaga[i] # Sumar el tiempo de ráfaga del proceso al tiempo de ráfaga anterior
         tiempos_finalizacion.append(rafaga_anterior) # Añadir el tiempo de finalización del proceso a la lista
